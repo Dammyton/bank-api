@@ -7,39 +7,27 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-
-	"github.com/shopspring/decimal"
 )
 
-var accounts = map[float64]*CustomAccount{}
-
-var (
-	number, amount, dest float64
-	err                  error
-)
+var accounts = map[string]*CustomAccount{}
 
 func deposit(w http.ResponseWriter, req *http.Request) {
 	accNumber := web.QueryStr(req, "number")
-	amounts := web.QueryStr(req, "amount")
 
-	if accNumber == "" {
-		web.Error(w, "Account number is missing!")
+	if len(accNumber) == 0 || len(accNumber) < 12 {
+		web.Error(w, "Invalid account number: wrong length")
 		return
 	}
 
-	if number, err = decimal.NewFromString(accNumber); err != nil {
-		web.Error(w, "Invalid account number!")
+	amount := web.QueryStrToDecimal(req, "amount")
+	if amount.IsZero() {
+		web.Error(w, "Amounts must be greater than zero!")
 		return
 	}
 
-	if amount, err = strconv.ParseFloat(amounts, 64); err != nil {
-		web.Error(w, "Invalid amount number!")
-		return
-	}
-
-	account, ok := accounts[number]
+	account, ok := accounts[accNumber]
 	if !ok {
-		web.Error(w, fmt.Sprintf("Account with number %v can't be found!", number))
+		web.Error(w, fmt.Sprintf("Account with number %s can't be found!", accNumber))
 		return
 	} else {
 		err := account.Deposit(amount)

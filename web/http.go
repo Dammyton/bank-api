@@ -1,8 +1,11 @@
 package web
 
 import (
+	"bank-api/pkg"
 	"fmt"
 	"net/http"
+
+	"github.com/shopspring/decimal"
 )
 
 func Response(w http.ResponseWriter, message string) {
@@ -22,4 +25,7 @@ func Error(w http.ResponseWriter, message string, status ...int) {
 func QueryStr(req *http.Request, name string) (result string) {
 	result = req.URL.Query().Get(name)
 	return
+}
+func QueryStrToDecimal(r *http.Request, name string) decimal.Decimal {
+	return pkg.StringToDecimal(r.URL.Query().Get(name))
 }
