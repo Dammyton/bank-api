@@ -1,11 +1,9 @@
 package bank
 
-
-
-//...
+import "testing"
 
 func TestTransfer(t *testing.T) {
-    accountA := Account{
+	accountA := Account{
 		Customer: Customer{
 			Name:    "John",
 			Address: "Los Angeles, California",

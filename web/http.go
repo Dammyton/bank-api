@@ -18,3 +18,8 @@ func Error(w http.ResponseWriter, message string, status ...int) {
 	w.WriteHeader(statusCode)
 	fmt.Fprintf(w, message)
 }
+
+func QueryStr(req *http.Request, name string) (result string) {
+	result = req.URL.Query().Get(name)
+	return
+}

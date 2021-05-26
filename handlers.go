@@ -7,30 +7,32 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+
+	"github.com/shopspring/decimal"
 )
 
 var accounts = map[float64]*CustomAccount{}
 
-func deposit(w http.ResponseWriter, req *http.Request) {
-	numberqs := req.URL.Query().Get("number")
-	amountqs := req.URL.Query().Get("amount")
+var (
+	number, amount, dest float64
+	err                  error
+)
 
-	if numberqs == "" {
+func deposit(w http.ResponseWriter, req *http.Request) {
+	accNumber := web.QueryStr(req, "number")
+	amounts := web.QueryStr(req, "amount")
+
+	if accNumber == "" {
 		web.Error(w, "Account number is missing!")
 		return
 	}
 
-	var (
-		number, amount float64
-		err            error
-	)
-
-	if number, err = strconv.ParseFloat(numberqs, 64); err != nil {
+	if number, err = decimal.NewFromString(accNumber); err != nil {
 		web.Error(w, "Invalid account number!")
 		return
 	}
 
-	if amount, err = strconv.ParseFloat(amountqs, 64); err != nil {
+	if amount, err = strconv.ParseFloat(amounts, 64); err != nil {
 		web.Error(w, "Invalid amount number!")
 		return
 	}
@@ -43,90 +45,122 @@ func deposit(w http.ResponseWriter, req *http.Request) {
 		err := account.Deposit(amount)
 		if err != nil {
 			fmt.Fprintf(w, "%v", err)
+
+			return
 		} else {
-			fmt.Fprintf(w, account.Statement())
+			web.Error(w, account.Statement())
+			return
 		}
 	}
 }
 
 func withdraw(w http.ResponseWriter, req *http.Request) {
-	numberqs := req.URL.Query().Get("number")
-	amountqs := req.URL.Query().Get("amount")
+	accNumber := web.QueryStr(req, "number")
+	amounts := web.QueryStr(req, "amount")
 
-	if numberqs == "" {
-		fmt.Fprintf(w, "Account number is missing!")
+	if accNumber == "" {
+		web.Error(w, "Account number is missing!")
 		return
 	}
 
-	if number, err := strconv.ParseFloat(numberqs, 64); err != nil {
-		fmt.Fprintf(w, "Invalid account number!")
-	} else if amount, err := strconv.ParseFloat(amountqs, 64); err != nil {
-		fmt.Fprintf(w, "Invalid amount number!")
+	if number, err = strconv.ParseFloat(accNumber, 64); err != nil {
+		web.Error(w, "Invalid account number!")
+		return
+	}
+
+	if amount, err = strconv.ParseFloat(amounts, 64); err != nil {
+		web.Error(w, "Invalid amount number!")
+		return
+	}
+
+	account, ok := accounts[number]
+	if !ok {
+		web.Error(w, fmt.Sprintf("Account with number %v can't be found!", number))
+		return
 	} else {
-		account, ok := accounts[number]
-		if !ok {
-			fmt.Fprintf(w, "Account with number %v can't be found!", number)
+
+		err := account.Withdraw(amount)
+		if err != nil {
+			fmt.Fprintf(w, "%v", err)
+			return
 		} else {
-			err := account.Withdraw(amount)
-			if err != nil {
-				fmt.Fprintf(w, "%v", err)
-			} else {
-				fmt.Fprintf(w, account.Statement())
-			}
+			web.Error(w, account.Statement())
+			return
+
 		}
 	}
+
 }
 
 func transfer(w http.ResponseWriter, req *http.Request) {
-	numberqs := req.URL.Query().Get("number")
-	amountqs := req.URL.Query().Get("amount")
-	destqs := req.URL.Query().Get("dest")
+	accNumber := web.QueryStr(req, "number")
+	amounts := web.QueryStr(req, "amount")
+	destAccNumber := web.QueryStr(req, "dest")
 
-	if numberqs == "" {
-		fmt.Fprintf(w, "Account number is missing!")
+	if accNumber == "" {
+		web.Error(w, "Account number is missing!")
 		return
 	}
 
-	if number, err := strconv.ParseFloat(numberqs, 64); err != nil {
-		fmt.Fprintf(w, "Invalid account number!")
-	} else if amount, err := strconv.ParseFloat(amountqs, 64); err != nil {
-		fmt.Fprintf(w, "Invalid amount number!")
-	} else if dest, err := strconv.ParseFloat(destqs, 64); err != nil {
-		fmt.Fprintf(w, "Invalid account destination number!")
+	if number, err = strconv.ParseFloat(accNumber, 64); err != nil {
+		web.Error(w, "Invalid account number!")
+		return
+	}
+
+	if amount, err = strconv.ParseFloat(amounts, 64); err != nil {
+		web.Error(w, "Invalid amount number!")
+		return
+	}
+
+	if dest, err = strconv.ParseFloat(destAccNumber, 64); err != nil {
+		web.Error(w, "Invalid account destination number!")
+		return
+	}
+
+	accountA, ok := accounts[number]
+	if !ok {
+		web.Error(w, fmt.Sprintf("Account with number %v can't be found!", number))
+		return
+	}
+
+	accountB, ok := accounts[dest]
+	if !ok {
+		web.Error(w, fmt.Sprintf("Account with number %v can't be found!", dest))
+		return
 	} else {
-		if accountA, ok := accounts[number]; !ok {
-			fmt.Fprintf(w, "Account with number %v can't be found!", number)
-		} else if accountB, ok := accounts[dest]; !ok {
-			fmt.Fprintf(w, "Account with number %v can't be found!", dest)
+		err := accountA.Transfer(amount, accountB.Account)
+		if err != nil {
+			fmt.Fprintf(w, "%v", err)
+
+			return
 		} else {
-			err := accountA.Transfer(amount, accountB.Account)
-			if err != nil {
-				fmt.Fprintf(w, "%v", err)
-			} else {
-				fmt.Fprintf(w, accountA.Statement())
-			}
+			web.Error(w, accountA.Statement())
+			return
 		}
 	}
 }
 
 func statement(w http.ResponseWriter, req *http.Request) {
-	numberqs := req.URL.Query().Get("number")
+	accNumber := web.QueryStr(req, "number")
 
-	if numberqs == "" {
-		fmt.Fprintf(w, "Account number is missing!")
+	if accNumber == "" {
+		web.Error(w, "Account number is missing!")
 		return
 	}
 
-	number, err := strconv.ParseFloat(numberqs, 64)
+	number, err := strconv.ParseFloat(accNumber, 64)
 	if err != nil {
-		fmt.Fprintf(w, "Invalid account number!")
+		web.Error(w, "Invalid account number!")
+		return
+	}
+
+	account, ok := accounts[number]
+	if !ok {
+		web.Error(w, fmt.Sprintf("Account with number %v can't be found!", number))
+		return
 	} else {
-		account, ok := accounts[number]
-		if !ok {
-			fmt.Fprintf(w, "Account with number %v can't be found!", number)
-		} else {
-			json.NewEncoder(w).Encode(bank.Statement(account))
-		}
+		json.NewEncoder(w).Encode(bank.Statement(account))
+
 	}
 }
 
