@@ -1,61 +1,37 @@
 package bank
 
 import (
-	"errors"
+	"github.com/shopspring/decimal"
 )
-
 
 // Customer ...
 type Customer struct {
-    Name    string
-    Address string
-    Phone   string
+	Name    string
+	Address string
+	Phone   string
 }
 
 // Account ...
 type Account struct {
-    Customer
-    Number  int32
-    Balance float64
+	Customer
+	Number  int
+	Balance decimal.Decimal
 }
 
-
 // Withdraw ...
-func (a *Account) Withdraw(amount float64) error {
-    if amount <= 0 {
-        return errors.New("the amount to withdraw should be greater than zero")
-    }
-
-    if a.Balance < amount {
-        return errors.New("the amount to withdraw should be greater than the account's balance")
-    }
-
-    a.Balance -= amount
-    return nil
+func (a *Account) Withdraw(amount decimal.Decimal) error {
+	a.Balance = a.Balance.Sub(amount)
+	return nil
 }
 
 // Deposit ...
-func (a *Account) Deposit(amount float64) error {
-    if amount <= 0 {
-        return errors.New("the amount to deposit should be greater than zero")
-    }
-
-    a.Balance += amount
-    return nil
+func (a *Account) Deposit(amount decimal.Decimal) error {
+	a.Balance = a.Balance.Add(amount)
+	return nil
 }
 
-
-
 // Transfer function
-func (a *Account) Transfer(amount float64, dest *Account) error {
-	if amount <= 0 {
-		return errors.New("the amount to transfer should be greater than zero")
-	}
-
-	if a.Balance < amount {
-		return errors.New("the amount to transfer should be greater than the account's balance")
-	}
-
+func (a *Account) Transfer(amount decimal.Decimal, dest *Account) error {
 	a.Withdraw(amount)
 	dest.Deposit(amount)
 	return nil

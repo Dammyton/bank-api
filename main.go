@@ -8,25 +8,25 @@ import (
 )
 
 func main() {
-	accounts[1001] = &CustomAccount{
+	accounts["100000000001"] = &CustomAccount{
 		Account: &bank.Account{
 			Customer: bank.Customer{
 				Name:    "John",
 				Address: "Los Angeles, California",
 				Phone:   "(213) 555 0147",
 			},
-			Number: 1001,
+			Number: 100000000001,
 		},
 	}
 
-	accounts[1002] = &CustomAccount{
+	accounts["100000000002"] = &CustomAccount{
 		Account: &bank.Account{
 			Customer: bank.Customer{
 				Name:    "Mark",
 				Address: "Irvine, California",
 				Phone:   "(949) 555 0198",
 			},
-			Number: 1002,
+			Number: 100000000002,
 		},
 	}
 
