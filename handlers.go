@@ -28,18 +28,15 @@ func deposit(w http.ResponseWriter, req *http.Request) {
 	if !ok {
 		web.Error(w, fmt.Sprintf("Account with number %s can't be found!", accNumber))
 		return
-	} else {
-		err := account.Deposit(amount)
-		if err != nil {
-			fmt.Fprintf(w, "%v", err)
-
-			return
-		} else {
-			web.Error(w, account.Statement())
-			return
-		}
-
 	}
+
+	err := account.Deposit(amount)
+	if err != nil {
+		fmt.Fprintf(w, "%v", err)
+		return
+	}
+	web.Error(w, account.Statement())
+
 }
 
 func withdraw(w http.ResponseWriter, req *http.Request) {
@@ -60,18 +57,17 @@ func withdraw(w http.ResponseWriter, req *http.Request) {
 	if !ok {
 		web.Error(w, fmt.Sprintf("Account with number %v can't be found!", accNumber))
 		return
-	} else {
-		err := account.Withdraw(amount)
-		if err != nil {
-			fmt.Fprintf(w, "%v", err)
-			return
-		} else {
-			web.Error(w, account.Statement())
-			return
-
-		}
-
 	}
+
+	err := account.Withdraw(amount)
+	if err != nil {
+		web.Error(w, err)
+		// web.Error(w, "Hello!")
+		// fmt.Fprintf(w, "%v", err)
+		return
+	}
+
+	web.Response(w, account.Statement())
 
 }
 
@@ -105,17 +101,15 @@ func transfer(w http.ResponseWriter, req *http.Request) {
 	if !ok {
 		web.Error(w, fmt.Sprintf("Account with number %v can't be found!", destAccNumber))
 		return
-	} else {
-		err := accountA.Transfer(amount, accountB.Account)
-		if err != nil {
-			fmt.Fprintf(w, "%v", err)
-
-			return
-		} else {
-			web.Error(w, accountA.Statement())
-			return
-		}
 	}
+
+	err := accountA.Transfer(amount, accountB.Account)
+	if err != nil {
+		fmt.Fprintf(w, "%v", err)
+		return
+	}
+	web.Error(w, accountA.Statement())
+
 }
 
 func statement(w http.ResponseWriter, req *http.Request) {
@@ -136,10 +130,9 @@ func statement(w http.ResponseWriter, req *http.Request) {
 	if !ok {
 		web.Error(w, fmt.Sprintf("Account with number %v can't be found!", accNumber))
 		return
-	} else {
-		json.NewEncoder(w).Encode(bank.Statement(account))
-
 	}
+	json.NewEncoder(w).Encode(bank.Statement(account))
+
 }
 
 // CustomAccount ...
