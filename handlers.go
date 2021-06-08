@@ -11,45 +11,36 @@ import (
 var accounts = map[string]*CustomAccount{}
 
 func deposit(w http.ResponseWriter, req *http.Request) {
+	amount := web.QueryStrToDecimal(req, "amount")
 	accNumber := web.QueryStr(req, "number")
 
 	if len(accNumber) == 0 || len(accNumber) < 12 {
 		web.Error(w, "Invalid account number: wrong length")
-		return
-	}
-
-	amount := web.QueryStrToDecimal(req, "amount")
-	if amount.IsZero() {
-		web.Error(w, "Amount must be greater than zero!")
 		return
 	}
 
 	account, ok := accounts[accNumber]
 	if !ok {
-		web.Error(w, fmt.Sprintf("Account with number %s can't be found!", accNumber))
+		web.Error(w, fmt.Sprintf("Account with number %v can't be found!", accNumber))
 		return
 	}
 
 	err := account.Deposit(amount)
 	if err != nil {
-		fmt.Fprintf(w, "%v", err)
+		web.Error(w, err)
 		return
+
 	}
-	web.Error(w, account.Statement())
+	web.Response(w, account.Statement())
 
 }
 
 func withdraw(w http.ResponseWriter, req *http.Request) {
+	amount := web.QueryStrToDecimal(req, "amount")
 	accNumber := web.QueryStr(req, "number")
 
 	if len(accNumber) == 0 || len(accNumber) < 12 {
 		web.Error(w, "Invalid account number: wrong length")
-		return
-	}
-
-	amount := web.QueryStrToDecimal(req, "amount")
-	if amount.IsZero() {
-		web.Error(w, "Amount must be greater than zero!")
 		return
 	}
 
@@ -62,8 +53,6 @@ func withdraw(w http.ResponseWriter, req *http.Request) {
 	err := account.Withdraw(amount)
 	if err != nil {
 		web.Error(w, err)
-		// web.Error(w, "Hello!")
-		// fmt.Fprintf(w, "%v", err)
 		return
 	}
 
@@ -74,15 +63,10 @@ func withdraw(w http.ResponseWriter, req *http.Request) {
 func transfer(w http.ResponseWriter, req *http.Request) {
 	accNumber := web.QueryStr(req, "number")
 	destAccNumber := web.QueryStr(req, "dest")
+	amount := web.QueryStrToDecimal(req, "amount")
 
 	if len(accNumber) == 0 || len(accNumber) < 12 {
 		web.Error(w, "Invalid account number: wrong length")
-		return
-	}
-
-	amount := web.QueryStrToDecimal(req, "amount")
-	if amount.IsZero() {
-		web.Error(w, "Amount must be greater than zero!")
 		return
 	}
 
@@ -105,10 +89,10 @@ func transfer(w http.ResponseWriter, req *http.Request) {
 
 	err := accountA.Transfer(amount, accountB.Account)
 	if err != nil {
-		fmt.Fprintf(w, "%v", err)
+		web.Error(w, err)
 		return
 	}
-	web.Error(w, accountA.Statement())
+	web.Response(w, accountA.Statement())
 
 }
 

@@ -10,7 +10,6 @@ import (
 
 func Response(w http.ResponseWriter, message string) {
 	fmt.Fprintf(w, "%v", message)
-	// fmt.Fprintf(w, message)
 }
 
 func Error(w http.ResponseWriter, message interface{}, status ...int) {
@@ -20,9 +19,7 @@ func Error(w http.ResponseWriter, message interface{}, status ...int) {
 	}
 	w.WriteHeader(statusCode)
 
-	s := message.(string)
-	fmt.Fprintf(w, "%v", s)
-	// fmt.Fprintf(w, s)
+	fmt.Fprintf(w, "%v", message)
 
 }
 
