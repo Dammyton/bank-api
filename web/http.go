@@ -8,7 +8,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-func Response(w http.ResponseWriter, message string) {
+func Response(w http.ResponseWriter, message interface{}) {
 	fmt.Fprintf(w, "%v", message)
 }
 
