@@ -1,6 +1,7 @@
 package bank
 
 import (
+	"bank-api/models"
 	"fmt"
 	"testing"
 
@@ -8,24 +9,25 @@ import (
 )
 
 func TestTransfer(t *testing.T) {
-	accountA := Account{
-		Customer: Customer{
+	accountA := models.Account{
+		Customer: models.Customer{
 			Name:    "John",
 			Address: "Los Angeles, California",
 			Phone:   "(213) 555 0147",
 		},
-		Number:  100000000001,
-		Balance: decimal.NewFromInt(0),
+
+		AccNumber: 100000000001,
+		Balance:   decimal.NewFromInt(0),
 	}
 
-	accountB := Account{
-		Customer: Customer{
+	accountB := models.Account{
+		Customer: models.Customer{
 			Name:    "Mark",
 			Address: "Irvine, California",
 			Phone:   "(949) 555 0198",
 		},
-		Number:  100000000002,
-		Balance: decimal.NewFromInt(0),
+		AccNumber: 100000000002,
+		Balance:   decimal.NewFromInt(0),
 	}
 
 	accountA.Deposit(decimal.NewFromInt(100))
@@ -64,6 +66,7 @@ func TestWithdraw(t *testing.T) {
 		Number:  100000000001,
 		Balance: decimal.NewFromInt(0),
 	}
+
 	account.Deposit(decimal.NewFromInt(1000))
 	account.Withdraw(decimal.NewFromInt(100))
 
