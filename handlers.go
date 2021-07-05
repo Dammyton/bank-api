@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func (a *application) withdraw(w http.ResponseWriter, req *http.Request) {
+func (a *Application) withdraw(w http.ResponseWriter, req *http.Request) {
 	amount := web.QueryStrToDecimal(req, "amount")
 	accNumber := web.QueryStr(req, "number")
 
@@ -22,11 +22,11 @@ func (a *application) withdraw(w http.ResponseWriter, req *http.Request) {
 
 }
 
-func (a *application) deposit(w http.ResponseWriter, req *http.Request) {
+func (a *Application) deposit(w http.ResponseWriter, req *http.Request) {
 	amount := web.QueryStrToDecimal(req, "amount")
 	accNumber := web.QueryStr(req, "number")
 
-	if len(accNumber) == 0 || len(accNumber) < 10 {
+	if len(accNumber) < 10 {
 		web.Error(w, "Invalid account number: wrong length")
 		return
 	}
@@ -39,7 +39,7 @@ func (a *application) deposit(w http.ResponseWriter, req *http.Request) {
 
 }
 
-func (a *application) transfer(w http.ResponseWriter, req *http.Request) {
+func (a *Application) transfer(w http.ResponseWriter, req *http.Request) {
 	accNumber := web.QueryStr(req, "number")
 	destAccNumber := web.QueryStr(req, "dest")
 	amount := web.QueryStrToDecimal(req, "amount")
@@ -62,7 +62,7 @@ func (a *application) transfer(w http.ResponseWriter, req *http.Request) {
 
 }
 
-func (a *application) statement(w http.ResponseWriter, req *http.Request) {
+func (a *Application) statement(w http.ResponseWriter, req *http.Request) {
 
 	accNumber := web.QueryStr(req, "number")
 

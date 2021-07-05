@@ -12,6 +12,6 @@ type Customer struct {
 // Account ...
 type Account struct {
 	Customer
-	AccNumber int             `json:"accnumber"`
+	AccNumber string          `json:"accnumber"`
 	Balance   decimal.Decimal `json:"balance"`
 }
