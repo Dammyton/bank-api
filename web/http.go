@@ -4,6 +4,7 @@ import (
 	"bank-api/pkg"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/shopspring/decimal"
 )
@@ -23,8 +24,10 @@ func Error(w http.ResponseWriter, message interface{}, status ...int) {
 
 }
 
-func QueryStr(req *http.Request, name string) (result string) {
-	result = req.URL.Query().Get(name)
+func QueryStr(req *http.Request, name string) (result int64) {
+	s := req.URL.Query().Get(name)
+	result, _ = strconv.ParseInt(s, 10, 64)
+
 	return
 }
 func QueryStrToDecimal(r *http.Request, name string) decimal.Decimal {

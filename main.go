@@ -3,10 +3,10 @@ package main
 import (
 	"bank-api/config"
 	"bank-api/services/bank"
-	"database/sql"
 	"log"
 	"net/http"
 
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
 
@@ -33,7 +33,7 @@ func main() {
 	log.Fatal(http.ListenAndServe(hostAddr, nil))
 }
 
-func setup() (app *Application, db *sql.DB, err error) {
+func setup() (app *Application, db *sqlx.DB, err error) {
 	db, err = config.SetUpDatabase()
 	if err != nil {
 		return
