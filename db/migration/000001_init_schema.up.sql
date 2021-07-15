@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS account (
+	id SERIAL PRIMARY KEY,
+	code VARCHAR(255) NOT NULL,
+	name VARCHAR(255) NOT NULL,
+	status VARCHAR (255),
+	balance VARCHAR(255) NOT NULL,
+    date_created DATE
+);

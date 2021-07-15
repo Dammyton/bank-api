@@ -21,20 +21,21 @@ type AccountModel struct {
 type AccountStatus int
 
 const (
-	ActiveAccount AccountStatus = 0
-	ClosedAccount AccountStatus = 1
+	BankAccountAll    AccountStatus = 0
+	BankAccountActive AccountStatus = 1
+	BankAccountClosed AccountStatus = 2
 )
 
 type Account struct {
 	ID   int64
-	Code string
+	Code int64
 	Name string
 
 	Status      AccountStatus
 	DateCreated time.Time
 }
 
-func (a AccountModel) CreateAccount(name, code string, status int, balance decimal.Decimal, tx ...DBI) (id int64, err error) {
+func (a AccountModel) CreateAccount(name string, code int64, status int64, balance decimal.Decimal, dateCreated time.Time, tx ...DBI) (id int64, err error) {
 	var db DBI
 	if tx != nil {
 		db = tx[0]
@@ -54,22 +55,21 @@ func (a AccountModel) CreateAccount(name, code string, status int, balance decim
 		}()
 	}
 
-	retv := db.QueryRowx(`
+	err = db.QueryRowx(`
 		insert into account
-			(code, name, status)
+			(code, name, status,balance, date_created)
 		values
-			($1, $2, $3)
-		returning id
-	`, code, name, status)
-	err = retv.Scan(&id)
+			($1, $2, $3, $4, $5)
+		returning id;
+	`, code, name, status, balance, dateCreated).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
 
 	l := LedgerModel{}
-	err = l.AddTransaction(id, balance, time.Now(), CreditTransaction, db)
+	err = l.AddTransaction(code, balance, time.Now(), CreditTransaction, db)
 
-	return
+	return code, nil
 }
 
 func (a AccountModel) CreditAccount(accountID int64, amount decimal.Decimal, tx ...*sqlx.Tx) (err error) {
@@ -80,6 +80,7 @@ func (a AccountModel) CreditAccount(accountID int64, amount decimal.Decimal, tx 
 	_ = db
 
 	l := LedgerModel{}
+
 	err = l.AddTransaction(accountID, amount, time.Now(), CreditTransaction, db)
 
 	return
@@ -111,7 +112,7 @@ func (a AccountModel) GetAccountBalance(accountID int64, tx ...*sqlx.Tx) (balanc
 	return
 }
 
-func (a AccountModel) CloseAccount(id int64, status AccountStatus, tx ...DBI) (err error) {
+func (a AccountModel) CloseAccount(accountID int64, status AccountStatus, tx ...DBI) (err error) {
 	var db DBI
 	if tx != nil {
 		db = tx[0]
@@ -131,12 +132,15 @@ func (a AccountModel) CloseAccount(id int64, status AccountStatus, tx ...DBI) (e
 		}()
 	}
 	retv := db.QueryRowx(`
-	update account
-	set status = $2
-	where id = $1
-	returning id
-`, status, id)
-	err = retv.Scan(&id)
+	update 
+		account
+	set 
+		status = $1
+	where 
+		code = $2
+	returning code
+`, status, accountID)
+	err = retv.Scan(&status)
 	if err != nil {
 		return err
 	}
@@ -190,7 +194,7 @@ func (a AccountModel) UpdateAccountInfo(name, code string, status int, balance d
 	return
 }
 
-func (a AccountModel) GetAccount(accountID int64, tx ...*sqlx.Tx) (account decimal.Decimal, err error) {
+func (a AccountModel) GetAccount(accountID int64, tx ...*sqlx.Tx) (data Account, err error) {
 	var db DBI = a.DB
 	if tx != nil {
 		db = tx[0]
@@ -199,66 +203,63 @@ func (a AccountModel) GetAccount(accountID int64, tx ...*sqlx.Tx) (account decim
 
 	sql := `
 	select code, name, status from account
-	where id = $1
+	where code = $1
 `
 	row := db.QueryRowx(sql, accountID)
-	err = row.Scan(&account)
+	err = row.Scan(&data.Code, &data.Name, &data.Status)
 	if err != nil {
-		return decimal.Decimal{}, err
+		return Account{}, err
 	}
 
 	return
 }
 
-func (a AccountModel) GetAllAccounts(tx ...*sqlx.Tx) ([]Account, error) {
+func (a AccountModel) GetAllAccounts(aType AccountStatus, tx ...*sqlx.Tx) ([]Account, error) {
 	var db DBI = a.DB
 	if tx != nil {
 		db = tx[0]
 	}
 	_ = db
 
-	sql := `
-	select code, name, status from account
-	order by id
-`
-	rows, err := db.Queryx(sql)
-	if err != nil {
-		return []Account{}, err
-	}
+	var sql string
 
-	items := []Account{}
-	for rows.Next() {
-		var i Account
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Code,
-		); err != nil {
+	if aType == 0 {
+
+		sql = `
+	select code, name,status from account
+`
+		rows, err := db.Queryx(sql)
+		if err != nil {
+			return []Account{}, err
+		}
+
+		items := []Account{}
+		for rows.Next() {
+			var i Account
+			if err := rows.Scan(
+				&i.ID,
+				&i.Name,
+				&i.Code,
+			); err != nil {
+				return nil, err
+			}
+			items = append(items, i)
+		}
+		if err := rows.Close(); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
+		if err := rows.Err(); err != nil {
+			return nil, err
+		}
+
+		return items, nil
 	}
 
-	return items, nil
-}
-
-func (a AccountModel) GetClosedAccounts(aType AccountStatus, tx ...*sqlx.Tx) ([]Account, error) {
-	var db DBI = a.DB
-	if tx != nil {
-		db = tx[0]
-	}
-	_ = db
-
-	sql := `
-	select name,code,status from account
-	where status = $1
-	order by id
+	sql = `
+	select 
+		code, name, status from account
+	where 
+		status = $1
 `
 	rows, err := db.Queryx(sql, aType)
 	if err != nil {

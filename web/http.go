@@ -24,6 +24,13 @@ func Error(w http.ResponseWriter, message interface{}, status ...int) {
 
 }
 
+func QueryStrg(req *http.Request, name string) (result string) {
+	s := req.URL.Query().Get(name)
+	// result, _ = strconv.ParseInt(s, 10, 64)
+
+	return s
+}
+
 func QueryStr(req *http.Request, name string) (result int64) {
 	s := req.URL.Query().Get(name)
 	result, _ = strconv.ParseInt(s, 10, 64)

@@ -44,7 +44,7 @@ func (a LedgerModel) AddTransaction(account int64, amount decimal.Decimal, dateT
 
 	_, err := db.Exec(`
 		insert into ledger
-			(account, amount, datetransaction, type)
+			(account, amount, date_transaction, type)
 		values
 			($1, $2, $3, $4)
 	`, account, amount, dateTrx, tType)
@@ -63,15 +63,21 @@ func (a LedgerModel) SumTransactions(account int64, tType LegerTransactionType, 
 		select
 			sum(amount) from ledger
 		Where
-			id = $1
+			account = $1
 	`
 	if tType != AllTransactions {
 		sql += `
 			and type = $2
 		`
+
+		row := db.QueryRowx(sql, account, tType)
+		err = row.Scan(&amount)
+		if err != nil {
+			return decimal.Decimal{}, err
+		}
 	}
 
-	row := db.QueryRowx(sql, account, tType)
+	row := db.QueryRowx(sql, account)
 	err = row.Scan(&amount)
 	if err != nil {
 		return decimal.Decimal{}, err

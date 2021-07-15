@@ -23,10 +23,15 @@ func main() {
 	// close the db connection
 	defer db.Close()
 
-	http.HandleFunc("/statement", app.statement)
-	http.HandleFunc("/deposit", app.deposit)
-	http.HandleFunc("/withdraw", app.withdraw)
+	http.HandleFunc("/credit", app.credit)
+	http.HandleFunc("/debit", app.debit)
 	http.HandleFunc("/transfer", app.transfer)
+	http.HandleFunc("/createaccount", app.createaccount)
+	http.HandleFunc("/accountbalance", app.getaccountbal)
+	http.HandleFunc("/closeaccount", app.closeaccount)
+	http.HandleFunc("/listactiveaccts", app.getactiveaccts)
+	http.HandleFunc("/listclosedaccts", app.getclosedaccts)
+	http.HandleFunc("/listaccounts", app.getaccounts)
 
 	hostAddr := "localhost:8000"
 	log.Println("running on ", hostAddr)
